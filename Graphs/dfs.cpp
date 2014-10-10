@@ -56,14 +56,15 @@ bool Graph::search (int src, int dest) {
 
     if (iter != edges.end())
       return true;
-  }
+  } else
+    return false;
 
   visited[src] = 1;
 
   // now search the adjacents
   set<int>::iterator iter = graph[src].begin();
   for (;iter != graph[src].end();iter++){
-    bool ret = search(src, *iter);
+    bool ret = search(*iter, dest);
     if (ret)
       return true;
   }
@@ -108,17 +109,20 @@ int main (int argc, char* argv[]) {
   // print the graph
   g.print();
 
+
   cout << "Search for adjacent" << endl;
 
   cout << "Input Source" << endl;
   int src;
   cin >> src;
 
-  cout << "Input Destination" << endl;
-  int dest;
-  cin >> dest;
+  while (true) {
+    cout << "Input Destination" << endl;
+    int dest;
+    cin >> dest;
 
-  bool exist = g.doesPathExist(src, dest);
+    bool exist = g.doesPathExist(src, dest);
 
-  cout << "Edge " << ((exist)? "Exists":"does not exist") << endl;
+    cout << "Edge " << ((exist) ? "Exists" : "does not exist") << endl;
+  }
 }
