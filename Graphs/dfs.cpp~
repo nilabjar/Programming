@@ -1,0 +1,68 @@
+#include <set>
+#include <map>
+#include <time.h>
+
+using namespace std;
+
+class Graph {
+
+  map<int, set<int>> graph;
+
+  public:
+    bool addNode (int i);
+    bool addEdge (int src, int dest);
+    bool doesPathExist (int src, int dest);
+    void print();
+};
+
+bool Graph::addNode (int i) {
+  set<int> edges;
+  graph[i] = edges;
+  return true;
+}
+
+bool Graph::addEdge (int src, int dest) {
+  graph[src].insert(dest);
+}
+
+bool Graph::doesPathExist(int src, int dest) {
+  return false;
+}
+
+void Graph::print() {
+  // for all nodes
+  for (int i = 0;i < 10;i++) {
+    cout << "Node " << i
+         << "'s adjacent nodes" << endl;
+    cout << "=======================" << endl;
+
+    // print the adjacent nodes ...
+    set<int>::iterator iter = graph[i].begin();
+    for (;iter!= graph[i].end();iter++) {
+      cout << "\t" << *iter << endl;
+    }// print this node
+
+  }// for all nodes
+}
+
+
+int main (int argc, char* argv[]) {
+
+  Graph g;
+  srand (time(NULL));
+
+  //add some nodes
+  for (int i = 0;i < 10;i++)
+    g.addNode(i);
+
+  // add some edges
+  for (int i = 0;i < 10;i++) {
+    for (int j=0;j<4;j++) {
+      int edge = rand()%10;
+      addEdge(i,j);
+    }
+  }
+
+  // print the graph
+  g.print();
+}
