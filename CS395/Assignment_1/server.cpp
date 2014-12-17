@@ -15,10 +15,10 @@
 #include<sstream>
 
 #include<pthread.h>
-
+#include<signal.h>
 //using namespace std;
 
-
+/*
 std::vector<std::string>
 split (const char* string, char splitter)
 {
@@ -34,7 +34,7 @@ split (const char* string, char splitter)
 
   return tokens;
 }
-
+*/
 bool terminate;
 std::vector<int> sockets;
 pthread_cond_t cond;
@@ -43,6 +43,7 @@ pthread_mutex_t mutex;
 void
 handle(int signum) {
 
+  std::cout << "Inside the signal handler" << std::endl;
   if (signum == SIGINT)
     terminate = true;
 }
@@ -53,13 +54,13 @@ void* client_respond(void* conn_details)
     char sendBuff[1024];
     memset(sendBuff, '0', sizeof(sendBuff));
 
-    pthread_mutex_lock(mutex);
+    pthread_mutex_lock(&mutex);
     while ( sockets.size() == 0)
-	pthread_cond_wait(cond, mutex); 
+	pthread_cond_wait(&cond, &mutex); 
     
     int connfd = sockets[0];
-    sockets.erase(sockets.first());
-    pthread_mutex_unlock(mutex);
+    sockets.erase(sockets.begin());
+    pthread_mutex_unlock(&mutex);
     //get the conn socket
     //int connfd = *((int*)conn_details);
 
@@ -75,13 +76,13 @@ void* client_respond(void* conn_details)
 
     if (p == NULL) // no file name specified ..
     {
-      cout << "No file name specified" << endl;
+      std::cout << "No file name specified" << std::endl;
       return 0;
     }
 
     std::string s = p+1; // get rid of the first '/'
 
-    ifstream in (s.c_str());
+    std::ifstream in (s.c_str());
     std::cout << "Returning File " << s.c_str() << std::endl;
 
     while (in)
@@ -114,10 +115,12 @@ int main (int argc, char* argv[])
 
   listen(listenfd, 10);
 
-  pthread_mutex_init(mutex);
-  pthread_cond_init(cond, NULL);
+  pthread_mutex_init(&mutex, NULL);
+  pthread_cond_init(&cond, NULL);
 
-  vector<pthread_t> threads;
+  std::vector<pthread_t> threads;
+  
+  signal(SIGINT, handle);
 
   for (int i = 0;i < 5;i++) {
     pthread_t thread;
@@ -127,12 +130,13 @@ int main (int argc, char* argv[])
 
   while (!terminate)
   {
-    cout << "Listening for incoming request" << endl;
+    std::cout << "Listening for incoming request" << std::endl;
     int connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
 
-    pthread_mutex_lock(mutex);
+    std::cout << "Got an incoming request" << std::endl;
+    pthread_mutex_lock(&mutex);
     sockets.push_back(connfd);
-    pthread_mutex_unlock(mutex);
+    pthread_mutex_unlock(&mutex);
 
     sleep(1);
   }
