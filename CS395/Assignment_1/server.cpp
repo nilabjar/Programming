@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <fstream>
 #include <string.h>
 #include <stdlib.h>
@@ -15,17 +16,18 @@
 
 #include<pthread.h>
 
-using namespace std;
+//using namespace std;
 
-vector<std::string>
+
+std::vector<std::string>
 split (const char* string, char splitter)
 {
-  stringstream ss(string);
+  std::stringstream ss(std::string);
   std::string s;
 
-  vector<std::string> tokens;
+  std::vector<std::string> tokens;
 
-  while (getline(ss, s, splitter))
+  while (std::getline(ss, s, splitter))
   {
     tokens.push_back(s);
   }
@@ -33,13 +35,35 @@ split (const char* string, char splitter)
   return tokens;
 }
 
+bool terminate;
+std::vector<int> sockets;
+pthread_cond_t cond;
+pthread_mutex_t mutex;
+
+void
+handle(int signum) {
+
+  if (signum == SIGINT)
+    terminate = true;
+}
+
 void* client_respond(void* conn_details)
 {
+  while (!terminate) {
     char sendBuff[1024];
     memset(sendBuff, '0', sizeof(sendBuff));
 
+    pthread_mutex_lock(mutex);
+    while ( sockets.size() == 0)
+	pthread_cond_wait(cond, mutex); 
+    
+    int connfd = sockets[0];
+    sockets.erase(sockets.first());
+    pthread_mutex_unlock(mutex);
     //get the conn socket
-    int connfd = *((int*)conn_details);
+    //int connfd = *((int*)conn_details);
+
+    
 
     int n = read( connfd, sendBuff, sizeof(sendBuff)-1 );
 
@@ -58,7 +82,7 @@ void* client_respond(void* conn_details)
     std::string s = p+1; // get rid of the first '/'
 
     ifstream in (s.c_str());
-    cout << "Returning File " << s.c_str() << endl;
+    std::cout << "Returning File " << s.c_str() << std::endl;
 
     while (in)
     {
@@ -70,11 +94,13 @@ void* client_respond(void* conn_details)
     in.close();
 
     close (connfd);
+
+  }
 }
 
 int main (int argc, char* argv[])
 {
-
+  terminate = false;
   struct sockaddr_in serv_addr;
 
   int listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -88,14 +114,30 @@ int main (int argc, char* argv[])
 
   listen(listenfd, 10);
 
-  while (true)
+  pthread_mutex_init(mutex);
+  pthread_cond_init(cond, NULL);
+
+  vector<pthread_t> threads;
+
+  for (int i = 0;i < 5;i++) {
+    pthread_t thread;
+    pthread_create(&thread, NULL, client_respond, NULL);
+    threads.push_back(thread);
+  }
+
+  while (!terminate)
   {
     cout << "Listening for incoming request" << endl;
     int connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
 
-    pthread_t thread;
-    pthread_create(&thread, NULL, client_respond, (void*)&connfd);
+    pthread_mutex_lock(mutex);
+    sockets.push_back(connfd);
+    pthread_mutex_unlock(mutex);
 
     sleep(1);
   }
+
+  for (int i = 0;i < 5;i++)
+    pthread_join(threads[i], NULL);
+  
 }
