@@ -147,6 +147,8 @@ int main (int argc, char* argv[])
     pthread_mutex_lock(&mutex);
     sockets.push_back(connfd);
     pthread_mutex_unlock(&mutex);
+    
+    pthread_cond_signal(&cond);
 
     sleep(1);
   }
