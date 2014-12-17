@@ -90,7 +90,8 @@ int main (int argc, char*argv[])
   {
     char command[100];
     memset(command, 0, 100);
-    sprintf(command, "%s %s", "/bin/more", "tmpout");
+//    sprintf(command, "%s %s", "/bin/more", "tmpout");
+    sprintf(command, "%s %s", "open -a TextEdit ", "tmpout");
     system (command);
   }
 

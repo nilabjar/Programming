@@ -50,6 +50,8 @@ handle(int signum) {
 
 void* client_respond(void* conn_details)
 {
+  std::cout << "Thread starting " << std::endl;
+
   while (!terminate) {
     char sendBuff[1024];
     memset(sendBuff, '0', sizeof(sendBuff));
@@ -111,9 +113,17 @@ int main (int argc, char* argv[])
   serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   serv_addr.sin_port = htons(atoi(argv[1]));
 
-  bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+  if ( bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
+  {
+    perror ("Error in bind : ");
+    return -1;
+  }
 
-  listen(listenfd, 10);
+  if ( listen(listenfd, 10) < 0)
+  {
+    perror ("Error in listen : ");
+    return -1;
+  }
 
   pthread_mutex_init(&mutex, NULL);
   pthread_cond_init(&cond, NULL);
